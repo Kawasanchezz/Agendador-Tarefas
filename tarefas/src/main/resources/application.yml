@@ -1,0 +1,10 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: tarefas
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://agendador:agendador@localhost:27017/tarefas?authSource=admin}
+      auto-index-creation: true

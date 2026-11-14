@@ -1,0 +1,14 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: usuario
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/usuarios}
+    username: ${DB_USER:agendador}
+    password: ${DB_PASSWORD:agendador}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
