@@ -15,7 +15,7 @@ cliente ──► bff :8080 (JWT, Swagger, ViaCEP)
 `usuario` e `tarefas` não têm autenticação própria: **não os exponha fora da sua rede**. Só o BFF deve alcançá-los.
 
 ## Requisitos
-Java 21, Maven 3.9+, Docker.
+Java 21, Maven 3.9+, Docker. Licença: [MIT](LICENSE).
 
 ## Subir
 ```bash
@@ -31,7 +31,7 @@ mvn -f usuario/pom.xml spring-boot:run
 mvn -f tarefas/pom.xml spring-boot:run
 mvn -f bff/pom.xml spring-boot:run
 ```
-Obrigatórias: `DB_USER`, `DB_PASSWORD`, `MONGO_URI`, `JWT_SECRET` (sem valores padrão). Opcionais: `DB_URL`, `USUARIO_URL`, `TAREFAS_URL`, `JWT_EXPIRATION_MS`. Os bancos só aceitam conexões de `127.0.0.1`.
+Obrigatórias: `DB_USER`, `DB_PASSWORD`, `MONGO_URI`, `JWT_SECRET`, `INTERNAL_TOKEN` (o mesmo valor nos três serviços) (sem valores padrão). Opcionais: `DB_URL`, `USUARIO_URL`, `TAREFAS_URL`, `JWT_EXPIRATION_MS`. Os bancos só aceitam conexões de `127.0.0.1`.
 
 Swagger: http://localhost:8080/swagger-ui.html (botão **Authorize** → cole o token).
 
@@ -42,8 +42,9 @@ Testes: `mvn -f usuario/pom.xml test` (idem `tarefas` e `bff`).
 |---|---|---|
 | POST | /usuarios | não |
 | POST | /usuarios/login | não |
+| POST | /usuarios/logout (invalida os tokens do usuário) | sim |
 | GET | /usuarios?email= (sem email = o seu) | sim |
-| PUT | /usuarios | sim |
+| PUT | /usuarios (trocar senha exige `senhaAtual` e invalida os tokens) | sim |
 | DELETE | /usuarios/{email} | sim |
 | POST / PUT | /usuarios/endereco (PUT com ?id=) | sim |
 | POST / PUT | /usuarios/telefone (PUT com ?id=) | sim |
@@ -80,11 +81,10 @@ curl -X POST localhost:8080/usuarios/endereco -H "Authorization: Bearer $TOKEN" 
 
 ## Erros
 Formato único: `{"timestamp","status","mensagem","path"}`.
-400 validação · 429 muitas tentativas de login · 401 token ausente/inválido ou login errado · 403 acesso a dados de outro usuário · 404 não encontrado/CEP inexistente · 409 e-mail duplicado · 502 falha do ViaCEP ou de serviço interno · 503 serviço interno fora do ar.
+400 validação · 403 senha atual incorreta · 429 muitas tentativas de login · 401 token ausente/inválido ou login errado · 403 acesso a dados de outro usuário · 404 não encontrado/CEP inexistente · 409 e-mail duplicado · 502 falha do ViaCEP ou de serviço interno · 503 serviço interno fora do ar.
 
 ## Limitações conhecidas
-- Token de conta excluída continua válido até expirar (JWT não revogável). Detalhes e demais limitações em [SECURITY.md](SECURITY.md).
-- Login limitado a 5 falhas por e-mail / 20 por IP em 15 min (HTTP 429), em memória.
+- Revogação de tokens e limite de login ficam em memória (por instância). Demais limitações e verificações executadas em [SECURITY.md](SECURITY.md).
 - `ddl-auto: update` é prático para desenvolvimento; em produção use migrações (Flyway).
 
 ## Segurança e hooks

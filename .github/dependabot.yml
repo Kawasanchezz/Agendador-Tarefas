@@ -3,12 +3,16 @@ updates:
   - package-ecosystem: maven
     directory: /usuario
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
   - package-ecosystem: maven
     directory: /tarefas
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
   - package-ecosystem: maven
     directory: /bff
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
