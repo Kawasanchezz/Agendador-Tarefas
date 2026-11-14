@@ -82,6 +82,22 @@ class UsuarioServiceTest {
     }
 
     @Test
+    void limitaEnderecosETelefonesPorUsuario() {
+        Usuario u = new Usuario();
+        u.setEmail("a@a.com");
+        for (int i = 0; i < UsuarioService.MAX_ITENS; i++) {
+            u.getEnderecos().add(new com.agendador.usuario.domain.Endereco());
+            u.getTelefones().add(new com.agendador.usuario.domain.Telefone());
+        }
+        when(repository.findByEmail("a@a.com")).thenReturn(Optional.of(u));
+
+        assertThrows(ConflitoException.class, () -> service.adicionarEndereco("a@a.com",
+                new com.agendador.usuario.dto.Dtos.EnderecoDto(null, "Rua", 1L, null, "SP", "SP", "01001000")));
+        assertThrows(ConflitoException.class, () -> service.adicionarTelefone("a@a.com",
+                new com.agendador.usuario.dto.Dtos.TelefoneDto(null, "11", "987654321")));
+    }
+
+    @Test
     void rejeitaSenhaIncorreta() {
         Usuario u = new Usuario();
         u.setEmail("a@a.com");

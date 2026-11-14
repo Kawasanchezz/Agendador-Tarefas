@@ -11,10 +11,10 @@ Não abra uma issue pública. Use o recurso **Report a vulnerability** (Security
 - `usuario` e `tarefas` só aceitam chamadas com o header `X-Internal-Token` (segredo compartilhado com o BFF, mínimo 32 caracteres, comparação em tempo constante). Sem ele respondem 401. Ainda assim, mantenha-os em rede privada: quem obtiver o token interno pode se passar por qualquer usuário.
 - Senhas: BCrypt. Segredos (JWT, token interno, bancos) só por variáveis de ambiente, sem valor padrão.
 - Login: limite de 5 falhas por e-mail e 20 por IP a cada 15 minutos (HTTP 429); tempo de resposta equalizado para e-mail inexistente.
-- Trocar a senha exige a senha atual.
+- Trocar a senha exige a senha atual, e tentativas erradas contam no mesmo limite do login.
 - Logout, troca de senha e exclusão de conta invalidam todos os tokens emitidos antes.
 - Cada usuário só lê, altera ou apaga os próprios dados (perfil, endereços, telefones, tarefas).
-- Entradas validadas com tamanho máximo; listagem de tarefas limitada a 500 itens.
+- Entradas validadas com tamanho máximo; listagem de tarefas limitada a 500 itens; no máximo 10 endereços, 10 telefones e 1000 tarefas por usuário (409 ao exceder).
 - Bancos publicados apenas em `127.0.0.1` no Docker Compose.
 
 ## Verificações executadas
@@ -26,7 +26,6 @@ Testes automatizados (unitários e MockMvc), teste de ponta a ponta com PostgreS
 | Revogação de tokens e limite de login ficam em memória, por instância | Reiniciar o BFF devolve a validade aos tokens revogados; com várias instâncias não há compartilhamento; atrás de proxy o IP visto é o do proxy | Redis; `server.forward-headers-strategy` |
 | Token interno único e estático | Vazamento permite agir como qualquer usuário | Rotação periódica; mTLS ou tokens por serviço |
 | Sem limite global de requisições nem de tamanho de corpo | Abuso volumétrico | Gateway/WAF e limites do servidor |
-| Troca de senha com token roubado permite tentar adivinhar a senha atual sem limite | Força bruta da senha atual | Aplicar o limitador de tentativas também a essa rota |
 | Cadastro revela se um e-mail já existe (409) | Enumeração de contas | Aceito por usabilidade; fluxo de confirmação por e-mail |
 | `ddl-auto: update` | Evolução de schema sem controle | Flyway |
 | Swagger UI público | Expõe o contrato da API | `springdoc.swagger-ui.enabled=false` em produção |

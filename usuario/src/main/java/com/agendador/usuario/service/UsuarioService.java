@@ -18,6 +18,8 @@ import java.util.Locale;
 @Service
 public class UsuarioService {
 
+    static final int MAX_ITENS = 10;
+
     private final UsuarioRepository repository;
     private final PasswordEncoder encoder;
     /** Hash descartável: gasta o mesmo tempo de BCrypt quando o e-mail não existe (evita enumeração por tempo). */
@@ -82,6 +84,9 @@ public class UsuarioService {
     @Transactional
     public EnderecoDto adicionarEndereco(String email, EnderecoDto dto) {
         Usuario u = obter(email);
+        if (u.getEnderecos().size() >= MAX_ITENS) {
+            throw new ConflitoException("Limite de " + MAX_ITENS + " endereços por usuário");
+        }
         Endereco e = new Endereco();
         e.setUsuario(u);
         copiar(dto, e);
@@ -102,6 +107,9 @@ public class UsuarioService {
     @Transactional
     public TelefoneDto adicionarTelefone(String email, TelefoneDto dto) {
         Usuario u = obter(email);
+        if (u.getTelefones().size() >= MAX_ITENS) {
+            throw new ConflitoException("Limite de " + MAX_ITENS + " telefones por usuário");
+        }
         Telefone t = new Telefone();
         t.setUsuario(u);
         t.setDdd(dto.ddd());

@@ -156,6 +156,27 @@ class AuthIntegrationTest {
     }
 
     @Test
+    void limitaTentativasDeAdivinharSenhaAtual() throws Exception {
+        String token = jwtService.gerar("chuta@mail.com");
+        when(usuarioClient.atualizar(org.mockito.ArgumentMatchers.eq("chuta@mail.com"), org.mockito.ArgumentMatchers.any()))
+                .thenThrow(org.springframework.web.client.HttpClientErrorException.create(
+                        org.springframework.http.HttpStatus.FORBIDDEN, "x", new org.springframework.http.HttpHeaders(),
+                        "{}".getBytes(), null));
+        String corpo = "{\"senha\":\"novaSenha1\",\"senhaAtual\":\"chute12345\"}";
+
+        for (int i = 0; i < 5; i++) {
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/usuarios")
+                            .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                            .content(corpo))
+                    .andExpect(status().isForbidden());
+        }
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/usuarios")
+                        .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
     void atualizarSoONomeNaoRevogaOToken() throws Exception {
         String token = jwtService.gerar("nome@mail.com");
         when(usuarioClient.atualizar(org.mockito.ArgumentMatchers.eq("nome@mail.com"), org.mockito.ArgumentMatchers.any()))

@@ -64,6 +64,15 @@ class TarefaServiceTest {
     }
 
     @Test
+    void recusaCriarAlemDoLimiteDeTarefas() {
+        when(repository.countByEmailUsuario("a@a.com")).thenReturn(1000L);
+
+        assertThrows(com.agendador.tarefas.exception.LimiteTarefasException.class, () -> service.criar("a@a.com",
+                new TarefaRequest("x", null, LocalDateTime.now().plusDays(1))));
+        org.mockito.Mockito.verify(repository, org.mockito.Mockito.never()).save(any());
+    }
+
+    @Test
     void alteraStatus() {
         Tarefa t = new Tarefa();
         t.setStatus(StatusTarefa.PENDENTE);

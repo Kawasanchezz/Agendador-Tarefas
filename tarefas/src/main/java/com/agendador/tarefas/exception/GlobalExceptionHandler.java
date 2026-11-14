@@ -31,6 +31,11 @@ public class GlobalExceptionHandler {
         return erro(HttpStatus.NOT_FOUND, e.getMessage(), r);
     }
 
+    @ExceptionHandler(LimiteTarefasException.class)
+    ResponseEntity<ErroResponse> limite(LimiteTarefasException e, HttpServletRequest r) {
+        return erro(HttpStatus.CONFLICT, e.getMessage(), r);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ErroResponse> validacao(MethodArgumentNotValidException e, HttpServletRequest r) {
         String msg = e.getBindingResult().getFieldErrors().stream()

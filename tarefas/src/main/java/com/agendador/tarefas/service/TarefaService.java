@@ -4,6 +4,7 @@ import com.agendador.tarefas.domain.StatusTarefa;
 import com.agendador.tarefas.domain.Tarefa;
 import com.agendador.tarefas.dto.Dtos.TarefaRequest;
 import com.agendador.tarefas.dto.Dtos.TarefaResponse;
+import com.agendador.tarefas.exception.LimiteTarefasException;
 import com.agendador.tarefas.exception.TarefaNaoEncontradaException;
 import com.agendador.tarefas.repository.TarefaRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +20,14 @@ public class TarefaService {
 
     /** Teto de resultados por listagem, para evitar respostas ilimitadas. */
     static final int LIMITE_LISTAGEM = 500;
+    static final int MAX_TAREFAS_POR_USUARIO = 1000;
 
     private final TarefaRepository repository;
 
     public TarefaResponse criar(String email, TarefaRequest req) {
+        if (repository.countByEmailUsuario(email) >= MAX_TAREFAS_POR_USUARIO) {
+            throw new LimiteTarefasException(MAX_TAREFAS_POR_USUARIO);
+        }
         Tarefa t = new Tarefa();
         t.setNome(req.nome());
         t.setDescricao(req.descricao());

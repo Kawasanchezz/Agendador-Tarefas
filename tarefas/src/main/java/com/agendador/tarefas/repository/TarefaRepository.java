@@ -15,5 +15,7 @@ public interface TarefaRepository extends MongoRepository<Tarefa, String> {
 
     void deleteByEmailUsuario(String emailUsuario);
 
+    long countByEmailUsuario(String emailUsuario);
+
     Optional<Tarefa> findByIdAndEmailUsuario(String id, String emailUsuario);
 }

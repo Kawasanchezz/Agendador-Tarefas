@@ -11,8 +11,6 @@ public final class Dtos {
     private Dtos() {
     }
 
-    // ---------- autenticação / usuário ----------
-
     public record UsuarioRequest(
             @NotBlank @Size(max = 120) String nome,
             @NotBlank @Email @Size(max = 254) String email,
@@ -51,8 +49,6 @@ public final class Dtos {
                                   List<EnderecoDto> enderecos, List<TelefoneDto> telefones) {
     }
 
-    // ---------- tarefas ----------
-
     public enum StatusTarefa {PENDENTE, EM_ANDAMENTO, CONCLUIDA, CANCELADA}
 
     public record TarefaRequest(
@@ -64,8 +60,6 @@ public final class Dtos {
     public record TarefaResponse(String id, String nome, String descricao, LocalDateTime dataEvento,
                                  LocalDateTime dataCriacao, StatusTarefa status, String emailUsuario) {
     }
-
-    // ---------- CEP ----------
 
     public record EnderecoCepResponse(String cep, String logradouro, String complemento, String bairro,
                                       String cidade, String estado) {

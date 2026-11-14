@@ -69,11 +69,21 @@ public class UsuarioController {
     @Operation(summary = "Atualizar nome e/ou senha do usuário logado",
             description = "Trocar a senha exige `senhaAtual` e invalida todos os tokens: faça login de novo.")
     public UsuarioResponse atualizar(@AuthenticationPrincipal String logado,
-                                     @Valid @RequestBody UsuarioUpdateRequest req) {
-        UsuarioResponse resposta = usuarios.atualizar(logado, req);
-        if (req.senha() != null) {
-            revogacao.revogarTodos(logado);
+                                     @Valid @RequestBody UsuarioUpdateRequest req, HttpServletRequest http) {
+        if (req.senha() == null) {
+            return usuarios.atualizar(logado, req);
         }
+        String ip = http.getRemoteAddr();
+        tentativas.verificar(logado, ip);
+        UsuarioResponse resposta;
+        try {
+            resposta = usuarios.atualizar(logado, req);
+        } catch (HttpClientErrorException.Forbidden e) {
+            tentativas.registrarFalha(logado, ip);
+            throw e;
+        }
+        tentativas.registrarSucesso(logado);
+        revogacao.revogarTodos(logado);
         return resposta;
     }
 
