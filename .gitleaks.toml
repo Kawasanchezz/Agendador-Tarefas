@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "valores de exemplo (placeholders) em .env.example"
+paths = ['''\.env\.example$''']
