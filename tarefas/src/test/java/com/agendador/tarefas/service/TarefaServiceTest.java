@@ -48,6 +48,22 @@ class TarefaServiceTest {
     }
 
     @Test
+    void listagemTemTetoDeResultados() {
+        service.listar("a@a.com", null, null);
+
+        org.mockito.Mockito.verify(repository).findByEmailUsuarioAndDataEventoBetweenOrderByDataEvento(
+                org.mockito.ArgumentMatchers.eq("a@a.com"), any(), any(),
+                org.mockito.ArgumentMatchers.eq(org.springframework.data.domain.PageRequest.of(0, 500)));
+    }
+
+    @Test
+    void deletarTodasRemoveSoDoUsuario() {
+        service.deletarTodas("a@a.com");
+
+        org.mockito.Mockito.verify(repository).deleteByEmailUsuario("a@a.com");
+    }
+
+    @Test
     void alteraStatus() {
         Tarefa t = new Tarefa();
         t.setStatus(StatusTarefa.PENDENTE);

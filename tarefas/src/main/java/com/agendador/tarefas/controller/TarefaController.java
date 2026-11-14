@@ -50,6 +50,12 @@ public class TarefaController {
         return service.alterarStatus(email, id, status);
     }
 
+    @DeleteMapping("/usuario")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletarTodas(@RequestHeader(HEADER) String email) {
+        service.deletarTodas(email);
+    }
+
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletar(@RequestHeader(HEADER) String email, @RequestParam String id) {

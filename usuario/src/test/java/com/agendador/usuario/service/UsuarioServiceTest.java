@@ -55,6 +55,16 @@ class UsuarioServiceTest {
     }
 
     @Test
+    void emailInexistenteTambemExecutaBcryptParaIgualarTempo() {
+        when(repository.findByEmail("x@x.com")).thenReturn(Optional.empty());
+        org.mockito.Mockito.clearInvocations(encoder);
+
+        assertThrows(NaoAutorizadoException.class,
+                () -> service.validarCredenciais(new LoginRequest("x@x.com", "qualquer1")));
+        verify(encoder).matches(org.mockito.ArgumentMatchers.eq("qualquer1"), org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
     void rejeitaSenhaIncorreta() {
         Usuario u = new Usuario();
         u.setEmail("a@a.com");

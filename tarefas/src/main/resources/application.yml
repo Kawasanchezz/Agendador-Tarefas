@@ -6,5 +6,5 @@ spring:
     name: tarefas
   data:
     mongodb:
-      uri: ${MONGO_URI:mongodb://agendador:agendador@localhost:27017/tarefas?authSource=admin}
+      uri: ${MONGO_URI}
       auto-index-creation: true

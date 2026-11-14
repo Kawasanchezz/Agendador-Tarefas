@@ -8,7 +8,6 @@ import com.agendador.usuario.exception.Excecoes.ConflitoException;
 import com.agendador.usuario.exception.Excecoes.NaoAutorizadoException;
 import com.agendador.usuario.exception.Excecoes.NaoEncontradoException;
 import com.agendador.usuario.repository.UsuarioRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,11 +15,18 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Locale;
 
 @Service
-@RequiredArgsConstructor
 public class UsuarioService {
 
     private final UsuarioRepository repository;
     private final PasswordEncoder encoder;
+    /** Hash descartável: gasta o mesmo tempo de BCrypt quando o e-mail não existe (evita enumeração por tempo). */
+    private final String hashFalso;
+
+    public UsuarioService(UsuarioRepository repository, PasswordEncoder encoder) {
+        this.repository = repository;
+        this.encoder = encoder;
+        this.hashFalso = encoder.encode("hash-falso-para-igualar-tempo");
+    }
 
     @Transactional
     public UsuarioResponse criar(UsuarioRequest req) {
@@ -37,8 +43,11 @@ public class UsuarioService {
 
     @Transactional(readOnly = true)
     public void validarCredenciais(LoginRequest req) {
-        Usuario u = repository.findByEmail(normalizar(req.email()))
-                .orElseThrow(() -> new NaoAutorizadoException("Credenciais inválidas"));
+        Usuario u = repository.findByEmail(normalizar(req.email())).orElse(null);
+        if (u == null) {
+            encoder.matches(req.senha(), hashFalso);
+            throw new NaoAutorizadoException("Credenciais inválidas");
+        }
         if (!encoder.matches(req.senha(), u.getSenha())) {
             throw new NaoAutorizadoException("Credenciais inválidas");
         }

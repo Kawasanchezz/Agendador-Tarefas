@@ -13,8 +13,8 @@ public final class Dtos {
     }
 
     public record UsuarioRequest(
-            @NotBlank String nome,
-            @NotBlank @Email String email,
+            @NotBlank @Size(max = 120) String nome,
+            @NotBlank @Email @Size(max = 254) String email,
             @NotBlank @Size(min = 6, max = 72) String senha) {
     }
 
@@ -23,7 +23,8 @@ public final class Dtos {
             @Size(min = 6, max = 72) String senha) {
     }
 
-    public record LoginRequest(@NotBlank @Email String email, @NotBlank String senha) {
+    public record LoginRequest(@NotBlank @Email @Size(max = 254) String email,
+                               @NotBlank @Size(max = 72) String senha) {
     }
 
     public record EnderecoDto(

@@ -1,6 +1,7 @@
 package com.agendador.tarefas.repository;
 
 import com.agendador.tarefas.domain.Tarefa;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.time.LocalDateTime;
@@ -10,7 +11,9 @@ import java.util.Optional;
 public interface TarefaRepository extends MongoRepository<Tarefa, String> {
 
     List<Tarefa> findByEmailUsuarioAndDataEventoBetweenOrderByDataEvento(
-            String emailUsuario, LocalDateTime inicio, LocalDateTime fim);
+            String emailUsuario, LocalDateTime inicio, LocalDateTime fim, Pageable pageable);
+
+    void deleteByEmailUsuario(String emailUsuario);
 
     Optional<Tarefa> findByIdAndEmailUsuario(String id, String emailUsuario);
 }

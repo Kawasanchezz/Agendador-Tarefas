@@ -1,17 +1,21 @@
 package com.agendador.bff.controller;
 
+import com.agendador.bff.client.TarefaClient;
 import com.agendador.bff.client.UsuarioClient;
 import com.agendador.bff.dto.Dtos.*;
 import com.agendador.bff.exception.Excecoes.AcessoNegadoException;
 import com.agendador.bff.security.JwtService;
+import com.agendador.bff.security.LoginAttemptService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.Locale;
 
@@ -22,7 +26,9 @@ import java.util.Locale;
 public class UsuarioController {
 
     private final UsuarioClient usuarios;
+    private final TarefaClient tarefas;
     private final JwtService jwt;
+    private final LoginAttemptService tentativas;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -35,9 +41,18 @@ public class UsuarioController {
     @PostMapping("/login")
     @SecurityRequirements
     @Operation(summary = "Autenticar e receber o JWT (público)")
-    public TokenResponse login(@Valid @RequestBody LoginRequest req) {
-        usuarios.validarCredenciais(req);
-        String token = jwt.gerar(req.email().trim().toLowerCase(Locale.ROOT));
+    public TokenResponse login(@Valid @RequestBody LoginRequest req, HttpServletRequest http) {
+        String email = req.email().trim().toLowerCase(Locale.ROOT);
+        String ip = http.getRemoteAddr();
+        tentativas.verificar(email, ip);
+        try {
+            usuarios.validarCredenciais(req);
+        } catch (HttpClientErrorException.Unauthorized e) {
+            tentativas.registrarFalha(email, ip);
+            throw e;
+        }
+        tentativas.registrarSucesso(email);
+        String token = jwt.gerar(email);
         return new TokenResponse(token, "Bearer", jwt.getExpirationMs());
     }
 
@@ -57,9 +72,11 @@ public class UsuarioController {
 
     @DeleteMapping("/{email}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Excluir a própria conta")
+    @Operation(summary = "Excluir a própria conta e todas as suas tarefas")
     public void deletar(@AuthenticationPrincipal String logado, @PathVariable String email) {
-        usuarios.deletar(proprio(logado, email));
+        String dono = proprio(logado, email);
+        usuarios.deletar(dono);
+        tarefas.deletarTodas(dono);
     }
 
     @PostMapping("/endereco")

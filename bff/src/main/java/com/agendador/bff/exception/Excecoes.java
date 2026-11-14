@@ -12,6 +12,13 @@ public final class Excecoes {
         }
     }
 
+    /** Muitas tentativas de login falhas (429). */
+    public static class TentativasExcedidasException extends RuntimeException {
+        public TentativasExcedidasException() {
+            super("Muitas tentativas de login. Tente novamente em alguns minutos");
+        }
+    }
+
     /** CEP inexistente (404). */
     public static class CepNaoEncontradoException extends RuntimeException {
         public CepNaoEncontradoException(String cep) {

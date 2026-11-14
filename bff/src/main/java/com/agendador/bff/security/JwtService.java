@@ -41,7 +41,8 @@ public class JwtService {
     public Optional<String> extrairEmail(String token) {
         try {
             return Optional.ofNullable(
-                    Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject());
+                            Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject())
+                    .filter(s -> !s.isBlank());
         } catch (JwtException | IllegalArgumentException e) {
             return Optional.empty();
         }

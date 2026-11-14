@@ -73,6 +73,67 @@ class AuthIntegrationTest {
     }
 
     @Test
+    void bloqueiaLoginAposVariasFalhasDoMesmoEmail() throws Exception {
+        doThrow(org.springframework.web.client.HttpClientErrorException.create(
+                org.springframework.http.HttpStatus.UNAUTHORIZED, "x", new org.springframework.http.HttpHeaders(),
+                "{}".getBytes(), null))
+                .when(usuarioClient).validarCredenciais(org.mockito.ArgumentMatchers.any());
+        String body = "{\"email\":\"forca@bruta.com\",\"senha\":\"errada\"}";
+
+        for (int i = 0; i < 5; i++) {
+            mvc.perform(post("/usuarios/login").contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isUnauthorized());
+        }
+        mvc.perform(post("/usuarios/login").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isTooManyRequests());
+        org.mockito.Mockito.verify(usuarioClient, org.mockito.Mockito.times(5))
+                .validarCredenciais(org.mockito.ArgumentMatchers.argThat(r -> "forca@bruta.com".equals(r.email())));
+    }
+
+    @Test
+    void recusaSenhaGigante() throws Exception {
+        String senha = "a".repeat(100_000);
+        mvc.perform(post("/usuarios/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"a@a.com\",\"senha\":\"" + senha + "\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void tokenComSubjectVazioRetorna401() throws Exception {
+        String token = jwtService.gerar(" ");
+        mvc.perform(get("/tarefas").header("Authorization", "Bearer " + token)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void excluirContaApagaTambemAsTarefas() throws Exception {
+        String token = jwtService.gerar("saindo@mail.com");
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .delete("/usuarios/saindo@mail.com").header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+        org.mockito.Mockito.verify(usuarioClient).deletar("saindo@mail.com");
+        org.mockito.Mockito.verify(tarefaClient).deletarTodas("saindo@mail.com");
+    }
+
+    @Test
+    void naoExcluiContaDeOutroUsuario() throws Exception {
+        String token = jwtService.gerar("ana@mail.com");
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .delete("/usuarios/vitima@mail.com").header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+        org.mockito.Mockito.verifyNoInteractions(tarefaClient);
+    }
+
+    @Test
+    void rotaInexistenteRetorna404EMetodoErradoRetorna405() throws Exception {
+        String token = jwtService.gerar("ana@mail.com");
+        mvc.perform(get("/nao-existe").header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/tarefas/1")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isMethodNotAllowed());
+    }
+
+    @Test
     void rotaProtegidaSemTokenRetorna401() throws Exception {
         mvc.perform(get("/tarefas")).andExpect(status().isUnauthorized());
     }

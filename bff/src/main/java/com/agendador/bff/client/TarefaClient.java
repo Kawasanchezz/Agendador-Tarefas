@@ -49,6 +49,10 @@ public class TarefaClient {
                 .header(HEADER, email).retrieve().body(TarefaResponse.class);
     }
 
+    public void deletarTodas(String email) {
+        http.delete().uri("/tarefas/usuario").header(HEADER, email).retrieve().toBodilessEntity();
+    }
+
     public void deletar(String email, String id) {
         http.delete().uri(u -> u.path("/tarefas").queryParam("id", id).build())
                 .header(HEADER, email).retrieve().toBodilessEntity();
