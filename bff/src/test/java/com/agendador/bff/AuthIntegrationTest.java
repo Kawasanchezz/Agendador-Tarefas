@@ -24,7 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(properties = {
         "jwt.secret=chave-de-teste-com-mais-de-32-caracteres-ok",
-        "jwt.expiration-ms=60000"})
+        "jwt.expiration-ms=60000",
+        "internal.token=token-interno-de-teste-com-32-chars-ok"})
 @AutoConfigureMockMvc
 class AuthIntegrationTest {
 
@@ -121,6 +122,51 @@ class AuthIntegrationTest {
                         .delete("/usuarios/vitima@mail.com").header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
         org.mockito.Mockito.verifyNoInteractions(tarefaClient);
+    }
+
+    @Test
+    void logoutInvalidaOTokenMasUmNovoLoginFunciona() throws Exception {
+        String antigo = jwtService.gerar("sai@mail.com");
+        mvc.perform(get("/tarefas").header("Authorization", "Bearer " + antigo)).andExpect(status().isOk());
+
+        mvc.perform(post("/usuarios/logout").header("Authorization", "Bearer " + antigo))
+                .andExpect(status().isNoContent());
+        mvc.perform(get("/tarefas").header("Authorization", "Bearer " + antigo))
+                .andExpect(status().isUnauthorized());
+
+        Thread.sleep(1100); // o JWT guarda a emissão em segundos
+        String novo = jwtService.gerar("sai@mail.com");
+        mvc.perform(get("/tarefas").header("Authorization", "Bearer " + novo)).andExpect(status().isOk());
+    }
+
+    @Test
+    void trocarSenhaInvalidaOsTokensAntigos() throws Exception {
+        String token = jwtService.gerar("troca@mail.com");
+        when(usuarioClient.atualizar(org.mockito.ArgumentMatchers.eq("troca@mail.com"), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new com.agendador.bff.dto.Dtos.UsuarioResponse(1L, "T", "troca@mail.com",
+                        java.util.List.of(), java.util.List.of()));
+
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/usuarios")
+                        .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"senha\":\"novaSenha1\",\"senhaAtual\":\"antiga123\"}"))
+                .andExpect(status().isOk());
+
+        mvc.perform(get("/tarefas").header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void atualizarSoONomeNaoRevogaOToken() throws Exception {
+        String token = jwtService.gerar("nome@mail.com");
+        when(usuarioClient.atualizar(org.mockito.ArgumentMatchers.eq("nome@mail.com"), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new com.agendador.bff.dto.Dtos.UsuarioResponse(1L, "N", "nome@mail.com",
+                        java.util.List.of(), java.util.List.of()));
+
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/usuarios")
+                        .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"Novo\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(get("/tarefas").header("Authorization", "Bearer " + token)).andExpect(status().isOk());
     }
 
     @Test

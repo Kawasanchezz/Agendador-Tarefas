@@ -17,6 +17,12 @@ public final class Excecoes {
         }
     }
 
+    public static class SenhaAtualIncorretaException extends RuntimeException {
+        public SenhaAtualIncorretaException() {
+            super("Senha atual incorreta ou não informada");
+        }
+    }
+
     public static class NaoAutorizadoException extends RuntimeException {
         public NaoAutorizadoException(String msg) {
             super(msg);

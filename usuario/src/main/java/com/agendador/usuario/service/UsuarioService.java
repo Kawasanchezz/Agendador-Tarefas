@@ -7,6 +7,7 @@ import com.agendador.usuario.dto.Dtos.*;
 import com.agendador.usuario.exception.Excecoes.ConflitoException;
 import com.agendador.usuario.exception.Excecoes.NaoAutorizadoException;
 import com.agendador.usuario.exception.Excecoes.NaoEncontradoException;
+import com.agendador.usuario.exception.Excecoes.SenhaAtualIncorretaException;
 import com.agendador.usuario.repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -65,6 +66,9 @@ public class UsuarioService {
             u.setNome(req.nome());
         }
         if (req.senha() != null) {
+            if (req.senhaAtual() == null || !encoder.matches(req.senhaAtual(), u.getSenha())) {
+                throw new SenhaAtualIncorretaException();
+            }
             u.setSenha(encoder.encode(req.senha()));
         }
         return UsuarioResponse.from(u);

@@ -12,3 +12,7 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: update
+
+internal:
+  # token compartilhado com o BFF (mínimo 32 caracteres); sem valor padrão de propósito
+  token: ${INTERNAL_TOKEN}

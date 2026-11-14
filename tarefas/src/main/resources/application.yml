@@ -8,3 +8,7 @@ spring:
     mongodb:
       uri: ${MONGO_URI}
       auto-index-creation: true
+
+internal:
+  # token compartilhado com o BFF (mínimo 32 caracteres); sem valor padrão de propósito
+  token: ${INTERNAL_TOKEN}

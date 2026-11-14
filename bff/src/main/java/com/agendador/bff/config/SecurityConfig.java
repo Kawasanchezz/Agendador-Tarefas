@@ -3,6 +3,7 @@ package com.agendador.bff.config;
 import com.agendador.bff.exception.GlobalExceptionHandler.ErroResponse;
 import com.agendador.bff.security.JwtAuthFilter;
 import com.agendador.bff.security.JwtService;
+import com.agendador.bff.security.RevogacaoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,7 +27,8 @@ import java.time.Instant;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService, ObjectMapper mapper)
+    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
+                                           RevogacaoService revogacao, ObjectMapper mapper)
             throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -40,7 +42,7 @@ public class SecurityConfig {
                                 escrever(mapper, req, res, HttpStatus.UNAUTHORIZED, "Token ausente ou inválido"))
                         .accessDeniedHandler((req, res, ex) ->
                                 escrever(mapper, req, res, HttpStatus.FORBIDDEN, "Acesso negado")))
-                .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthFilter(jwtService, revogacao), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

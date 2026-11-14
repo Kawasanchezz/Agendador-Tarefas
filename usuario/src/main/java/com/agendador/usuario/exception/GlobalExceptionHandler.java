@@ -42,6 +42,11 @@ public class GlobalExceptionHandler {
         return erro(HttpStatus.NOT_FOUND, e.getMessage(), r);
     }
 
+    @ExceptionHandler(SenhaAtualIncorretaException.class)
+    ResponseEntity<ErroResponse> senhaAtual(SenhaAtualIncorretaException e, HttpServletRequest r) {
+        return erro(HttpStatus.FORBIDDEN, e.getMessage(), r);
+    }
+
     @ExceptionHandler(NaoAutorizadoException.class)
     ResponseEntity<ErroResponse> naoAutorizado(NaoAutorizadoException e, HttpServletRequest r) {
         return erro(HttpStatus.UNAUTHORIZED, e.getMessage(), r);

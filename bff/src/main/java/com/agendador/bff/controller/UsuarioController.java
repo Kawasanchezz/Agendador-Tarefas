@@ -6,6 +6,7 @@ import com.agendador.bff.dto.Dtos.*;
 import com.agendador.bff.exception.Excecoes.AcessoNegadoException;
 import com.agendador.bff.security.JwtService;
 import com.agendador.bff.security.LoginAttemptService;
+import com.agendador.bff.security.RevogacaoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,6 +30,7 @@ public class UsuarioController {
     private final TarefaClient tarefas;
     private final JwtService jwt;
     private final LoginAttemptService tentativas;
+    private final RevogacaoService revogacao;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -64,10 +66,22 @@ public class UsuarioController {
     }
 
     @PutMapping
-    @Operation(summary = "Atualizar nome e/ou senha do usuário logado")
+    @Operation(summary = "Atualizar nome e/ou senha do usuário logado",
+            description = "Trocar a senha exige `senhaAtual` e invalida todos os tokens: faça login de novo.")
     public UsuarioResponse atualizar(@AuthenticationPrincipal String logado,
                                      @Valid @RequestBody UsuarioUpdateRequest req) {
-        return usuarios.atualizar(logado, req);
+        UsuarioResponse resposta = usuarios.atualizar(logado, req);
+        if (req.senha() != null) {
+            revogacao.revogarTodos(logado);
+        }
+        return resposta;
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Encerrar sessão: invalida todos os tokens emitidos até agora para este usuário")
+    public void logout(@AuthenticationPrincipal String logado) {
+        revogacao.revogarTodos(logado);
     }
 
     @DeleteMapping("/{email}")
@@ -77,6 +91,7 @@ public class UsuarioController {
         String dono = proprio(logado, email);
         usuarios.deletar(dono);
         tarefas.deletarTodas(dono);
+        revogacao.revogarTodos(dono);
     }
 
     @PostMapping("/endereco")

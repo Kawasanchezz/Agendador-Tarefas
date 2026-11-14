@@ -19,8 +19,9 @@ public final class Dtos {
     }
 
     public record UsuarioUpdateRequest(
-            String nome,
-            @Size(min = 6, max = 72) String senha) {
+            @Size(max = 120) String nome,
+            @Size(min = 6, max = 72) String senha,
+            @Size(max = 72) String senhaAtual) {
     }
 
     public record LoginRequest(@NotBlank @Email @Size(max = 254) String email,

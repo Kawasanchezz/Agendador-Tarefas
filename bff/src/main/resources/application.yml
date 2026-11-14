@@ -20,3 +20,6 @@ jwt:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+internal:
+  token: ${INTERNAL_TOKEN}

@@ -19,9 +19,11 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final RevogacaoService revogacao;
 
-    public JwtAuthFilter(JwtService jwtService) {
+    public JwtAuthFilter(JwtService jwtService, RevogacaoService revogacao) {
         this.jwtService = jwtService;
+        this.revogacao = revogacao;
     }
 
     @Override
@@ -29,10 +31,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain chain) throws ServletException, IOException {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (header != null && header.startsWith("Bearer ")) {
-            jwtService.extrairEmail(header.substring(7)).ifPresent(email -> {
-                var auth = new UsernamePasswordAuthenticationToken(email, null, List.of());
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            });
+            jwtService.validar(header.substring(7))
+                    .filter(t -> !revogacao.estaRevogado(t.email(), t.emitidoEm()))
+                    .ifPresent(t -> SecurityContextHolder.getContext().setAuthentication(
+                            new UsernamePasswordAuthenticationToken(t.email(), null, List.of())));
         }
         chain.doFilter(request, response);
     }

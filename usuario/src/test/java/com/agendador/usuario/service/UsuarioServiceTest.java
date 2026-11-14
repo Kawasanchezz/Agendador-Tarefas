@@ -65,6 +65,23 @@ class UsuarioServiceTest {
     }
 
     @Test
+    void trocarSenhaExigeSenhaAtualCorreta() {
+        Usuario u = new Usuario();
+        u.setEmail("a@a.com");
+        u.setSenha(encoder.encode("atual123"));
+        when(repository.findByEmail("a@a.com")).thenReturn(Optional.of(u));
+
+        assertThrows(com.agendador.usuario.exception.Excecoes.SenhaAtualIncorretaException.class,
+                () -> service.atualizar("a@a.com", new com.agendador.usuario.dto.Dtos.UsuarioUpdateRequest(null, "nova1234", null)));
+        assertThrows(com.agendador.usuario.exception.Excecoes.SenhaAtualIncorretaException.class,
+                () -> service.atualizar("a@a.com", new com.agendador.usuario.dto.Dtos.UsuarioUpdateRequest(null, "nova1234", "errada")));
+        assertTrue(encoder.matches("atual123", u.getSenha()));
+
+        service.atualizar("a@a.com", new com.agendador.usuario.dto.Dtos.UsuarioUpdateRequest(null, "nova1234", "atual123"));
+        assertTrue(encoder.matches("nova1234", u.getSenha()));
+    }
+
+    @Test
     void rejeitaSenhaIncorreta() {
         Usuario u = new Usuario();
         u.setEmail("a@a.com");
