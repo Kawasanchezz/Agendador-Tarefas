@@ -20,18 +20,18 @@ Java 21, Maven 3.9+, Docker.
 ## Subir
 ```bash
 # 1. bancos
-cp .env.example .env
+cp .env.example .env   # troque todas as senhas e o JWT_SECRET
 docker compose up -d
 
-# 2. variáveis (bash; no PowerShell use $env:NOME="valor")
-export JWT_SECRET="uma-chave-com-pelo-menos-32-caracteres-aqui"
+# 2. variáveis (bash; carrega o .env no shell. No PowerShell use $env:NOME="valor")
+set -a; source .env; set +a   # exige JWT_SECRET, DB_*, MONGO_URI definidos no .env
 
 # 3. serviços (um terminal cada)
 mvn -f usuario/pom.xml spring-boot:run
 mvn -f tarefas/pom.xml spring-boot:run
 mvn -f bff/pom.xml spring-boot:run
 ```
-Variáveis opcionais (valores padrão em `.env.example`): `DB_URL`, `DB_USER`, `DB_PASSWORD`, `MONGO_URI`, `USUARIO_URL`, `TAREFAS_URL`, `JWT_EXPIRATION_MS`.
+Obrigatórias: `DB_USER`, `DB_PASSWORD`, `MONGO_URI`, `JWT_SECRET` (sem valores padrão). Opcionais: `DB_URL`, `USUARIO_URL`, `TAREFAS_URL`, `JWT_EXPIRATION_MS`. Os bancos só aceitam conexões de `127.0.0.1`.
 
 Swagger: http://localhost:8080/swagger-ui.html (botão **Authorize** → cole o token).
 
@@ -80,9 +80,12 @@ curl -X POST localhost:8080/usuarios/endereco -H "Authorization: Bearer $TOKEN" 
 
 ## Erros
 Formato único: `{"timestamp","status","mensagem","path"}`.
-400 validação · 401 token ausente/inválido ou login errado · 403 acesso a dados de outro usuário · 404 não encontrado/CEP inexistente · 409 e-mail duplicado · 502 falha do ViaCEP ou de serviço interno · 503 serviço interno fora do ar.
+400 validação · 429 muitas tentativas de login · 401 token ausente/inválido ou login errado · 403 acesso a dados de outro usuário · 404 não encontrado/CEP inexistente · 409 e-mail duplicado · 502 falha do ViaCEP ou de serviço interno · 503 serviço interno fora do ar.
 
 ## Limitações conhecidas
-- Excluir a conta não apaga as tarefas do usuário (ficam órfãs no MongoDB).
-- O JWT não é revogável antes de expirar (sem refresh token nem logout).
+- Token de conta excluída continua válido até expirar (JWT não revogável). Detalhes e demais limitações em [SECURITY.md](SECURITY.md).
+- Login limitado a 5 falhas por e-mail / 20 por IP em 15 min (HTTP 429), em memória.
 - `ddl-auto: update` é prático para desenvolvimento; em produção use migrações (Flyway).
+
+## Segurança e hooks
+Veja [SECURITY.md](SECURITY.md). Ative o scan de segredos no commit com `git config core.hooksPath .githooks` (requer [gitleaks](https://github.com/gitleaks/gitleaks)).
