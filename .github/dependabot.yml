@@ -4,15 +4,48 @@ updates:
     directory: /usuario
     schedule: { interval: weekly }
     cooldown: { default-days: 7 }
+    open-pull-requests-limit: 3
+    ignore:
+      # Spring Boot 4 / springdoc 3 são migração maior: fazer manualmente, não por PR automático
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.springdoc:*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      maven-minor-patch:
+        update-types: ["minor", "patch"]
   - package-ecosystem: maven
     directory: /tarefas
     schedule: { interval: weekly }
     cooldown: { default-days: 7 }
+    open-pull-requests-limit: 3
+    ignore:
+      # Spring Boot 4 / springdoc 3 são migração maior: fazer manualmente, não por PR automático
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.springdoc:*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      maven-minor-patch:
+        update-types: ["minor", "patch"]
   - package-ecosystem: maven
     directory: /bff
     schedule: { interval: weekly }
     cooldown: { default-days: 7 }
+    open-pull-requests-limit: 3
+    ignore:
+      # Spring Boot 4 / springdoc 3 são migração maior: fazer manualmente, não por PR automático
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.springdoc:*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      maven-minor-patch:
+        update-types: ["minor", "patch"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
     cooldown: { default-days: 7 }
+    groups:
+      github-actions:
+        patterns: ["*"]
