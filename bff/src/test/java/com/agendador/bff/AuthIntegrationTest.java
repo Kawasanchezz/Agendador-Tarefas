@@ -191,6 +191,13 @@ class AuthIntegrationTest {
     }
 
     @Test
+    void postProtegidoSemBearerNemTokenCsrfRecusa() throws Exception {
+        mvc.perform(post("/tarefas").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"x\",\"dataEvento\":\"2030-01-15T10:00:00\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void rotaInexistenteRetorna404EMetodoErradoRetorna405() throws Exception {
         String token = jwtService.gerar("ana@mail.com");
         mvc.perform(get("/nao-existe").header("Authorization", "Bearer " + token))

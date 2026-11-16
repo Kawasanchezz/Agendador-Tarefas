@@ -9,12 +9,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -26,14 +27,26 @@ import java.time.Instant;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    static boolean isBearerOuPublico(HttpServletRequest req) {
+        String auth = req.getHeader(HttpHeaders.AUTHORIZATION);
+        if (auth != null && auth.startsWith("Bearer ")) {
+            return true;
+        }
+        return "POST".equals(req.getMethod())
+                && ("/usuarios".equals(req.getRequestURI()) || "/usuarios/login".equals(req.getRequestURI()));
+    }
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
                                            RevogacaoService revogacao, ObjectMapper mapper)
             throws Exception {
-        // CSRF desabilitado de propósito: a API é stateless e autentica por header Authorization (Bearer),
-        // sem cookies de sessão. Um navegador não envia esse header automaticamente, então não há
-        // requisição forjada por site cruzado. Não reabilitar sem trocar a autenticação por cookies.
-        http.csrf(AbstractHttpConfigurer::disable)
+        // CSRF ativo para requisições que podem ser disparadas por um navegador (sem header Bearer).
+        // Requisições com "Authorization: Bearer" não são enviadas automaticamente por sites de terceiros,
+        // então ficam isentas. Os endpoints públicos de cadastro e login também ficam isentos, porque o
+        // cliente ainda não tem token. Qualquer outro POST/PUT/DELETE sem Bearer precisa do token CSRF.
+        http.csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .ignoringRequestMatchers(SecurityConfig::isBearerOuPublico))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(HttpMethod.POST, "/usuarios", "/usuarios/login").permitAll()
