@@ -30,6 +30,9 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
                                            RevogacaoService revogacao, ObjectMapper mapper)
             throws Exception {
+        // CSRF desabilitado de propósito: a API é stateless e autentica por header Authorization (Bearer),
+        // sem cookies de sessão. Um navegador não envia esse header automaticamente, então não há
+        // requisição forjada por site cruzado. Não reabilitar sem trocar a autenticação por cookies.
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
